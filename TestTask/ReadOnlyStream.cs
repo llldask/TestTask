@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 
 namespace TestTask
 {
@@ -15,18 +16,22 @@ namespace TestTask
         /// <param name="fileFullPath">Полный путь до файла для чтения</param>
         public ReadOnlyStream(string fileFullPath)
         {
-            IsEof = true;
-
-            // TODO : Заменить на создание реального стрима для чтения файла!
-            _localStream = null;
+            _localStream = File.OpenRead(fileFullPath);
+            CheckLenghtStream();
         }
-                
+        private void CheckLenghtStream()
+        {
+            if (_localStream == null || _localStream.Length == 0)
+                IsEof = true;
+            else
+                IsEof = false;
+        }
         /// <summary>
         /// Флаг окончания файла.
         /// </summary>
         public bool IsEof
         {
-            get; // TODO : Заполнять данный флаг при достижении конца файла/стрима при чтении
+            get;
             private set;
         }
 
@@ -36,10 +41,19 @@ namespace TestTask
         /// должен бросать соответствующее исключение
         /// </summary>
         /// <returns>Считанный символ.</returns>
+        private int sizeBuffer = 1;
         public char ReadNextChar()
         {
-            // TODO : Необходимо считать очередной символ из _localStream
-            throw new NotImplementedException();
+            byte[] b = new byte[1];
+            UTF8Encoding temp = new UTF8Encoding(true);
+            if (_localStream.Read(b, 0, sizeBuffer) > 0)
+                return char.Parse(temp.GetString(b, 0, sizeBuffer));
+            else
+            {
+                IsEof = true;
+                throw new EndOfStreamException();
+            }
+
         }
 
         /// <summary>
@@ -49,12 +63,21 @@ namespace TestTask
         {
             if (_localStream == null)
             {
-                IsEof = true;
+                CheckLenghtStream();
                 return;
             }
 
             _localStream.Position = 0;
             IsEof = false;
+        }
+
+        public void Close()
+        {
+            _localStream.Close();
+        }
+        ~ReadOnlyStream()
+        {
+            Close();
         }
     }
 }

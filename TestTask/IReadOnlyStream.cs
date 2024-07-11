@@ -11,6 +11,8 @@
 
         void ResetPositionToStart();
 
+        void Close();
+
         bool IsEof { get; }
     }
 }
